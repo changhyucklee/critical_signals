@@ -1,0 +1,7 @@
+*.log
+my.log
+*.xlsx
+plots/*.png
+data/*.*
+/API
+MongoDBTest.py
