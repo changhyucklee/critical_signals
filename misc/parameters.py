@@ -299,5 +299,38 @@ tag_list_sigMon=[
 'New_RFI_Tilting_Value',
 'New_RFI_Salt_Flow_PV',
 
-'DC_3 JET_PV_SplitJetFacePressure'
+'DC_3 JET_PV_SplitJetFacePressure',
+'SH BB_DS_BEARING_TEMP','SH BB_NDS_BEARING_TEMP',
+'SH RT_DS_BEARING_TEMP','SH RT_NDS_BEARING_TEMP',
+'SH HD_DS_BEARING_TEMP','SH HD_NDS_BEARING_TEMP',
+'M22_Amp_Out', 'M38_Amp_Out',
+'FIKE_BB DE_EIV1','FIKE_BB DE_EIV2','FIKE_BB DE_EIV3',
+'FIKE_SH1 SH1_EIV1','FIKE_SH1 SH1_EIV2',
+'FIKE_SH2 SH2_EIV1','FIKE_SH2 SH2_EIV2',
+
+'SH BB_AMPS','SH RT_AMPS','SH HD_AMPS',
+
+'Delac_1 Cyclone_Inlet_Air_Temp_Setpoint','Delac_1 Cyclone_Inlet_Temp','Delac_1 Kiln_Inlet_Temperature','Delac_1 Recirc_Fan_Motor_Requested_Speed',
+'Delac_2 Cyclone_Inlet_Air_Temp_Setpoint','Delac_2 Cyclone_Inlet_Temp','Delac_2 Kiln_Inlet_Temperature','Delac_2 Recirc_Fan_Motor_Requested_Speed'
 ]
+#
+#
+# today = datetime.date.today()
+# StartDay = today - datetime.timedelta(days=8)
+# EndDay = today - datetime.timedelta(days=1)
+# StartDay_3_1 = today - datetime.timedelta(days=3)
+# StartDay_1 = today - datetime.timedelta(days=1)
+# StartDay_2 = today - datetime.timedelta(days=2)
+#
+# MonthStartDay = today - datetime.timedelta(days=31)
+# MonthStartDay = MonthStartDay.strftime('%Y-%m-%d')+' 06:30:00'
+#
+# OneYearAgoDay = today - datetime.timedelta(days=365)
+# OneYearAgoDay = OneYearAgoDay.strftime('%Y-%m-%d')+' 06:30:00'
+#
+# ToDay_0630 = today.strftime('%Y-%m-%d')+' 06:30:00'
+#
+# StartDay2 = StartDay.strftime('%Y-%m-%d')+' 06:30:00'
+# EndDay2 = EndDay.strftime('%Y-%m-%d')+' 06:30:00'
+# StartDay_3 = StartDay_3_1.strftime('%Y-%m-%d') + ' 06:30:00'
+# StartDay_2_1 = StartDay_2.strftime('%Y-%m-%d') + ' 06:30:00'

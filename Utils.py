@@ -13,7 +13,7 @@ import pyodbc
 from misc import parameters as p
 
 import subprocess
-from sharepoint import SharePoint
+# from sharepoint import SharePoint
 from pymongo import MongoClient
 
 import io
@@ -216,8 +216,8 @@ def CoolingTower_Plot(clt_table,df_today):
     plt.axhline(y=clt_table['Min'][0], color='red', linestyle='dashed')
     # plt.axhline(y=10, color='red', linestyle='dashed')
     # plt.axhline(y=0, color='red', linestyle='dashed')
-    df_today = df_today[df_today['Nalco8_Turbidity'] > 1]
-    plt.plot(df_today['Nalco8_Turbidity'], label='Nalco8_Turbidity')
+    df_today_1 = df_today[df_today['Nalco8_Turbidity'] > 0]
+    plt.plot(df_today_1['Nalco8_Turbidity'], label='Nalco8_Turbidity')
     plt.legend()
 
     plt.subplot(222)
@@ -383,7 +383,7 @@ def CL_CA_Com(df,lst_Out):
 
     return lst_stmt, df
 
-def create_visualization(target,df, x_col, y_col, lst_Out, plot,y_min,y_max):
+def create_visualization(target,df, x_col, y_col, lst_Out, plot,y_min,y_max,target_p,Alarm):
     plt.rcParams['font.family'] = 'Malgun Gothic'
     plt.rcParams['axes.unicode_minus'] = False
     plt.rc('font', size=15)  # controls default text sizes
@@ -436,7 +436,6 @@ def create_visualization(target,df, x_col, y_col, lst_Out, plot,y_min,y_max):
         line.set(title=target)
 
     elif plot == 'bar':
-        print('target : ', target)
         ax.set(title=y_col + ' Trend')
         # label points on the plot
         bar = sns.barplot(x=x_col, y=y_col, data=df,ci=None)
@@ -501,6 +500,25 @@ def create_visualization(target,df, x_col, y_col, lst_Out, plot,y_min,y_max):
             ax.set(ylim=(y_min-10, y_max+10))
 
         line.set(title=target)
+    elif plot == 'line_alarm_multi':
+        line = sns.lineplot(x=x_col, y='value', hue='variable', data=pd.melt(df, [x_col]), palette=['b', 'g'])
+        ax.grid(True, linestyle='--', axis='y')
+        if target != 'M22, M38 Conveyor 전류 Monitoring':
+            line.axhline(y=target_p, color='red', linestyle='dashed')
+        line.axhline(y=Alarm, color='red')
+        if '온도' in target:
+            line.set_ylabel("temp")
+        elif '전류' in target:
+                line.set_ylabel("전류값")
+        # 'y축 0: 점선 및 "Semi Close" 문구 표시
+        # 'y축 1: Open 문구 표시
+        # 'y축 2: 점선 및 "Full Close" 문구 표시
+        elif 'Fike' in target:
+           line.set_ylabel("Open 여부")
+           plt.yticks([0, 1, 2], ['Semi Close', 'Open', 'Full Close'])
+
+        ax.set(ylim=(y_min, y_max))
+        line.set(title=target)
 
     elif plot == 'line_raw_TC_BoxTemp':
         fig, ax = plt.subplots(1,2,figsize=(20, 10))
@@ -551,7 +569,7 @@ def send_to_DBF(lst_stmt,data_file_path):
     dir = pathlib.Path(__file__).parent.absolute()
     folder = r"/data/"
     plot_path = str(dir) + folder
-
+    # data_file_path = plot_path + data_file_path.split('/')[2]
 
     try:
         # command = ['databricks', 'fs', 'rm', '-r',
@@ -579,28 +597,28 @@ def send_to_DBF(lst_stmt,data_file_path):
         logger.info({"Error": str(err)})
 
 
-def send_to_SharePoint(lst_stmt):
-    dir = pathlib.Path(__file__).parent.absolute()
-    folder = r"/data/"
-    dir_path = str(dir) + folder
-    plot_path = str(dir) + r"/data/"
-    str_today = str(date.today())
-    data_file_path = dir_path+'/data_{}.csv'.format(str_today)
-    folder_path = str_today
-    # upload Data file
-    SharePoint().upload_file(data_file_path, 'df_M_{}.csv'.format(str_today), folder_path)
-    SharePoint().upload_file(data_file_path, 'data_{}.csv'.format(str_today), folder_path)
-    logger.info("Data has sent to SharePoint successfully")
-    for f in lst_stmt:  # Add files to the message
-        plots_file_name = f[1]
-        plots_file_path = os.path.join(plot_path, plots_file_name)
-    # upload Plot file
-        SharePoint().upload_file(plots_file_path, plots_file_name, folder_path)
-
-    logger.info("Plot has sent to SharePoint successfully")
-
-    # delete file
-    # SharePoint().delete_file(file_name, folder_name)
+# def send_to_SharePoint(lst_stmt):
+#     dir = pathlib.Path(__file__).parent.absolute()
+#     folder = r"/data/"
+#     dir_path = str(dir) + folder
+#     plot_path = str(dir) + r"/data/"
+#     str_today = str(date.today())
+#     data_file_path = dir_path+'/data_{}.csv'.format(str_today)
+#     folder_path = str_today
+#     # upload Data file
+#     SharePoint().upload_file(data_file_path, 'df_M_{}.csv'.format(str_today), folder_path)
+#     SharePoint().upload_file(data_file_path, 'data_{}.csv'.format(str_today), folder_path)
+#     logger.info("Data has sent to SharePoint successfully")
+#     for f in lst_stmt:  # Add files to the message
+#         plots_file_name = f[1]
+#         plots_file_path = os.path.join(plot_path, plots_file_name)
+#     # upload Plot file
+#         SharePoint().upload_file(plots_file_path, plots_file_name, folder_path)
+#
+#     logger.info("Plot has sent to SharePoint successfully")
+#
+#     # delete file
+#     # SharePoint().delete_file(file_name, folder_name)
 
 # send email using subject and body
 def send_email_multi(recipients, lst_Target, lst_stmt):

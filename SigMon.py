@@ -15,14 +15,14 @@ import time
 # log 출력 형식
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=logging.DEBUG,  format=formatter)
-# 로그 생성
+# # 로그 생성
 logger = logging.getLogger()
-
+#
 warnings.filterwarnings("ignore")
-# log를 파일에 출력
-file_handler = logging.FileHandler('my.log')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+# # log를 파일에 출력
+# file_handler = logging.FileHandler('my.log')
+# file_handler.setFormatter(formatter)
+# logger.addHandler(file_handler)
 
 
 today = datetime.date.today()
@@ -70,10 +70,17 @@ def get_vis(plot_type_map,df_v):
         plot = plot_info['plot']
         y_min = plot_info['y_min']
         y_max = plot_info['y_max']
+        if plot_info['plot'] =='line_alarm_multi':
+            target_p = plot_info['target']
+            Alarm = plot_info['Alarm']
+        else:
+            target_p =''
+            Alarm = ''
+
         if lst_Out:
             avg_stmt += ', 관리범위 벗어난 기간: {}'.format(lst_Out)
         lst_avg.append(avg_stmt)
-        path_plot, filename = U.create_visualization(target,df_v, x_col, y_col, lst_Out, plot,y_min,y_max)
+        path_plot, filename = U.create_visualization(target,df_v, x_col, y_col, lst_Out, plot,y_min,y_max,target_p,Alarm)
         files.append(filename)
     lst_stmt = list(zip(lst_avg, files))
     df_data = pd.DataFrame(list(zip(plot_type_map.keys(), lst_avg, files)),
@@ -86,69 +93,96 @@ def get_vis(plot_type_map,df_v):
 def get_plot_type_map(lst_Target,date_Out,avg_values):
     plot_type_map = {
         'Ti-B rod 투입 현황': {'x_col': 'Timestamp', 'y_col': 'DC_3 ROD_PV_TiBorSpeed',
-                         'date_out': [],
-                         'avg': avg_values['DC_3 ROD_PV_TiBorSpeed'], 'plot': 'line_raw_multi', 'y_min': 30,
-                         'y_max': 60},
+                           'date_out': [],
+                           'avg': avg_values['DC_3 ROD_PV_TiBorSpeed'], 'plot': 'line_raw_multi', 'y_min': 30,
+                           'y_max': 60},
+        'Debaler Bearing (DR/NDR) 온도 Monitoring': {'x_col': 'Timestamp', 'y_col': 'SH BB_DS_BEARING_TEMP',
+                                                   'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                                   'y_min': 0, 'y_max': 90, 'target': 70, 'Alarm': 85},
+        '#1 Shredder (DR/NDR) 온도 Monitoring': {'x_col': 'Timestamp', 'y_col': 'SH RT_DS_BEARING_TEMP',
+                                               'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                               'y_min': 0, 'y_max': 85, 'target': 70, 'Alarm': 80},
+        '#2 Shredder (DR/NDR) 온도 Monitoring': {'x_col': 'Timestamp', 'y_col': 'SH HD_DS_BEARING_TEMP',
+                                               'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                               'y_min': 0, 'y_max': 85, 'target': 70, 'Alarm': 80},
+        'M22, M38 Conveyor 전류 Monitoring': {'x_col': 'Timestamp', 'y_col': 'M22_Amp_Out',
+                                            'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                            'y_min': 0, 'y_max': 15, 'target': 9, 'Alarm': 10},
+        'Fike system damper Monitoring_ Debaler': {'x_col': 'Timestamp', 'y_col': 'FIKE_BB DE_EIV1',
+                                                   'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                                   'y_min': 0, 'y_max': 2, 'target': 0, 'Alarm': 2},
+        'Fike system damper Monitoring_ #1 Shredder': {'x_col': 'Timestamp', 'y_col': 'FIKE_SH1 SH1_EIV1',
+                                                       'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                                       'y_min': 0, 'y_max': 2, 'target': 0, 'Alarm': 2},
+        'Fike system damper Monitoring_ #2 Shredder': {'x_col': 'Timestamp', 'y_col': 'FIKE_SH2 SH2_EIV1',
+                                                       'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                                       'y_min': 0, 'y_max': 2, 'target': 0, 'Alarm': 2},
+        'Debaler, Shreder1, 2 대한 전류값 Monitoring': {'x_col': 'Timestamp', 'y_col': 'SH BB_AMPS',
+                                                   'date_out': [], 'avg': [], 'plot': 'line_alarm_multi',
+                                                   'y_min': 0, 'y_max': 204.5, 'target': 136.3, 'Alarm': 163.5},
         '주조 초기 용탕 온도': {'x_col': 'just_date', 'y_col': 'RT_1', 'date_out': date_Out['RT_1'], 'avg': avg_values['RT_1'],
-                        'plot': 'box','y_min':682,'y_max':3.5},
+                        'plot': 'box', 'y_min': 682, 'y_max': 3.5},
         '초기 냉각수 수온': {'x_col': 'just_date', 'y_col': 'CT_1', 'date_out': date_Out['CT_1'], 'avg': avg_values['CT_1'],
-                      'plot': 'box','y_min':30,'y_max':3.5},
+                      'plot': 'box', 'y_min': 30, 'y_max': 3.5},
 
         'decoater 1 #3zone temp': {'x_col': 'just_date', 'y_col': 'Delac_1 WTCT3',
                                    'date_out': [], 'avg': avg_values['Delac_1 WTCT3'],
-                                    'plot': 'box', 'y_min': 430, 'y_max': 3.5},
+                                   'plot': 'box', 'y_min': 430, 'y_max': 3.5},
         'decoater 1 #4zone temp': {'x_col': 'just_date', 'y_col': 'Delac_1 WTCT4',
-                                   'date_out':[], 'avg': avg_values['Delac_1 WTCT4'],
+                                   'date_out': [], 'avg': avg_values['Delac_1 WTCT4'],
                                    'plot': 'box', 'y_min': 530, 'y_max': 3.5},
         'decoater 2 #3zone temp': {'x_col': 'just_date', 'y_col': 'Delac_2 WTCT3',
                                    'date_out': [], 'avg': avg_values['Delac_2 WTCT3'],
                                    'plot': 'box', 'y_min': 430, 'y_max': 3.5},
         'decoater 2 #4zone temp': {'x_col': 'just_date', 'y_col': 'Delac_2 WTCT4',
-                                   'date_out':[], 'avg': avg_values['Delac_2 WTCT4'],
+                                   'date_out': [], 'avg': avg_values['Delac_2 WTCT4'],
                                    'plot': 'box', 'y_min': 530, 'y_max': 3.5},
 
         'Butt curl수준': {'x_col': 'just_date', 'y_col': 'BUTTCURL', 'date_out': date_Out['BUTTCURL'],
-                        'avg': avg_values['BUTTCURL'], 'plot': 'box','y_min':40,'y_max':45},
-        'Alpur 염소 사용량': {'x_col': 'BATCHNO', 'y_col': 'Cl_Scale_Usage_Drop', 'date_out': date_Out['Cl_Scale_Usage_Drop'],
-                         'avg': avg_values['Cl_Scale_Usage_Drop'], 'plot': 'bar','y_min':0,'y_max':1},
+                        'avg': avg_values['BUTTCURL'], 'plot': 'box', 'y_min': 40, 'y_max': 45},
+        'Alpur 염소 사용량': {'x_col': 'BATCHNO', 'y_col': 'Cl_Scale_Usage_Drop',
+                         'date_out': date_Out['Cl_Scale_Usage_Drop'],
+                         'avg': avg_values['Cl_Scale_Usage_Drop'], 'plot': 'bar', 'y_min': 0, 'y_max': 1},
         'Alpur 염소사용량(일자별)': {'x_col': 'just_date', 'y_col': 'Cl_Scale_Usage_Drop_Day',
-                         'date_out': [],
-                         'avg': avg_values['Cl_Scale_Usage_Drop_Day'], 'plot': 'bar', 'y_min': 0, 'y_max': 10},
+                             'date_out': [],
+                             'avg': avg_values['Cl_Scale_Usage_Drop_Day'], 'plot': 'bar', 'y_min': 0, 'y_max': 10},
         'Alpur Head Loss': {'x_col': 'BATCHNO', 'y_col': 'Alpur_head_loss', 'date_out': date_Out['Alpur_head_loss'],
-                            'avg': avg_values['Alpur_head_loss'], 'plot': 'line','y_min':20,'y_max':40},
+                            'avg': avg_values['Alpur_head_loss'], 'plot': 'line', 'y_min': 20, 'y_max': 40},
         'DBF Head Loss': {'x_col': 'BATCHNO', 'y_col': 'DBF_head_loss', 'date_out': date_Out['DBF_head_loss'],
-                          'avg': avg_values['DBF_head_loss'], 'plot': 'line','y_min':40,'y_max':60},
-        'Ca 제거효율': {'x_col': 'just_date', 'y_col': 'CA_REMOVE_RATE', 'date_out':[],
-                          'avg': avg_values['CA_REMOVE_RATE'], 'plot': 'box', 'y_min': 40, 'y_max': 60},
+                          'avg': avg_values['DBF_head_loss'], 'plot': 'line', 'y_min': 40, 'y_max': 60},
+        'Ca 제거효율': {'x_col': 'just_date', 'y_col': 'CA_REMOVE_RATE', 'date_out': [],
+                    'avg': avg_values['CA_REMOVE_RATE'], 'plot': 'box', 'y_min': 40, 'y_max': 60},
         'Ca 제거효율(DROP)': {'x_col': 'BATCHNO', 'y_col': 'CA_REMOVE_RATE', 'date_out': [],
                           'avg': avg_values['CA_REMOVE_RATE'], 'plot': 'line', 'y_min': 40, 'y_max': 60},
         'Alpur 염소 저장소 Pressure': {'x_col': 'Timestamp', 'y_col': 'CT Cl2_Storage_Cl2_Pressure', 'date_out': [],
-                          'avg': avg_values['CT Cl2_Storage_Cl2_Pressure'], 'plot': 'line_raw','y_min':2.5,'y_max':3.5},
+                                  'avg': avg_values['CT Cl2_Storage_Cl2_Pressure'], 'plot': 'line_raw', 'y_min': 2.5,
+                                  'y_max': 3.5},
         'Alpur 염소 Main Panel Pressure': {'x_col': 'Timestamp', 'y_col': 'Alpur Cl_Main_Pressure',
                                          'date_out': [],
-                                         'avg': avg_values['Alpur Cl_Main_Pressure'], 'plot': 'line_raw','y_min':2.5,'y_max':3.5},
+                                         'avg': avg_values['Alpur Cl_Main_Pressure'], 'plot': 'line_raw', 'y_min': 2.5,
+                                         'y_max': 3.5},
         'Alpur 염소 Flow': {'x_col': 'Timestamp', 'y_col': 'Alpur CHLORINE.AI.Flow_Rotor_1',
-                                         'date_out': [],
-                                         'avg': avg_values['Alpur CHLORINE.AI.Flow_Rotor_1'], 'plot': 'line_raw_multi', 'y_min': 50,
-                                         'y_max': 250},
-        'Casting water supply pressure': {'x_col': 'Timestamp', 'y_col': 'CT PCV_202_SV',
                           'date_out': [],
-                          'avg': avg_values['CT PCV_202_SV'], 'plot': 'line_raw_multi', 'y_min': 0,
-                          'y_max': 10},
+                          'avg': avg_values['Alpur CHLORINE.AI.Flow_Rotor_1'], 'plot': 'line_raw_multi', 'y_min': 50,
+                          'y_max': 250},
+        'Casting water supply pressure': {'x_col': 'Timestamp', 'y_col': 'CT PCV_202_SV',
+                                          'date_out': [],
+                                          'avg': avg_values['CT PCV_202_SV'], 'plot': 'line_raw_multi', 'y_min': 0,
+                                          'y_max': 10},
         'Casting water supply flow': {'x_col': 'Timestamp', 'y_col': 'DC_3 WTR_SPO_FaceWaterFlow',
-                                                 'date_out': [],
-                                                 'avg': avg_values['DC_3 WTR_SPO_FaceWaterFlow'],
-                                                 'plot': 'line_raw_multi', 'y_min': 0,
-                                                 'y_max': 1300},
+                                      'date_out': [],
+                                      'avg': avg_values['DC_3 WTR_SPO_FaceWaterFlow'],
+                                      'plot': 'line_raw_multi', 'y_min': 0,
+                                      'y_max': 1300},
         'PIT 301 & PIT 402 & PIT 403': {'x_col': 'Timestamp', 'y_col': 'Boiler Waste heat boiler front pressure PIT301',
-                           'date_out': [],
-                           'avg': 0,
-                           'plot': 'line_raw_multi', 'y_min': -450,
-                           'y_max': 0},
+                                        'date_out': [],
+                                        'avg': 0,
+                                        'plot': 'line_raw_multi', 'y_min': -450,
+                                        'y_max': 0},
         '#3 Baghouse 차압체크': {'x_col': 'Timestamp', 'y_col': '7000_CB BF3_DPT_DUCT01',
-                           'date_out': [],
-                           'avg': 0,
-                           'plot': 'line_raw', 'y_min': 50,'y_max': 250},
+                             'date_out': [],
+                             'avg': 0,
+                             'plot': 'line_raw', 'y_min': 50, 'y_max': 250},
         '#4 Baghouse 차압체크': {'x_col': 'Timestamp', 'y_col': '7000_HB BF2_DPT_DUCT01',
                              'date_out': [],
                              'avg': 0,
@@ -161,46 +195,48 @@ def get_plot_type_map(lst_Target,date_Out,avg_values):
                              'date_out': [],
                              'avg': 0,
                              'plot': 'line_raw', 'y_min': 150, 'y_max': 320},
-        'Main differential pressure #7 Baghouse' : {'x_col': 'Timestamp', 'y_col': 'Boiler PIT403-PIT402 _PRESS PIDC402',
-                             'date_out': [],
-                             'avg': 0,
-                             'plot': 'line_raw', 'y_min': -75, 'y_max': -150},
+        'Main differential pressure #7 Baghouse': {'x_col': 'Timestamp', 'y_col': 'Boiler PIT403-PIT402 _PRESS PIDC402',
+                                                   'date_out': [],
+                                                   'avg': 0,
+                                                   'plot': 'line_raw', 'y_min': -75, 'y_max': -150},
         'Alpur leak': {'x_col': 'Timestamp', 'y_col': 'Alpur CHLORINE_MAIN.AI.Leak',
-                          'date_out': [],
-                          'avg': 0, 'plot': 'line_raw', 'y_min': -5, 'y_max': 5},
+                       'date_out': [],
+                       'avg': 0, 'plot': 'line_raw', 'y_min': -5, 'y_max': 5},
         'Casting pit water level': {'x_col': 'Timestamp', 'y_col': 'DC_3 PIT_PV_PitWaterLevel',
-                       'date_out': [],
-                       'avg': 0, 'plot': 'line_raw', 'y_min': 3, 'y_max': 3.5},
-        'Cooling tower cold pond level': {'x_col': 'Timestamp', 'y_col': 'CT LIA_201_LT',
-                       'date_out': [],
-                       'avg': 0, 'plot': 'line_raw', 'y_min': 20, 'y_max': 70},
-        '소석회 투입량 체크': {'x_col': 'Timestamp', 'y_col': '14000_HB AI448',
                                     'date_out': [],
-                                    'avg': 0, 'plot': 'line_raw', 'y_min': 5000, 'y_max': 7000},
+                                    'avg': 0, 'plot': 'line_raw', 'y_min': 3, 'y_max': 3.5},
+        'Cooling tower cold pond level': {'x_col': 'Timestamp', 'y_col': 'CT LIA_201_LT',
+                                          'date_out': [],
+                                          'avg': 0, 'plot': 'line_raw', 'y_min': 20, 'y_max': 70},
+        '소석회 투입량 체크': {'x_col': 'Timestamp', 'y_col': '14000_HB AI448',
+                       'date_out': [],
+                       'avg': 0, 'plot': 'line_raw', 'y_min': 5000, 'y_max': 7000},
         '활성탄 투입량 체크': {'x_col': 'Timestamp', 'y_col': '14000_HB AI456',
                        'date_out': [],
                        'avg': 0, 'plot': 'line_raw', 'y_min': 3000, 'y_max': 5000},
         '가성소다 탱크 내 잔여량 확인': {'x_col': 'Timestamp', 'y_col': 'Boiler AOH storage tank level LT601',
-                       'date_out': [],
-                       'avg': 0, 'plot': 'line_raw', 'y_min': 10, 'y_max': 90},
-        'pH 값 체크': {'x_col': 'Timestamp', 'y_col': 'Boiler AE501_PH_Sensor_new',
                              'date_out': [],
-                             'avg': 0, 'plot': 'line_raw', 'y_min': 8, 'y_max': 10},
-        '중탄산 투입량 체크': {'x_col': 'Timestamp', 'y_col': 'Boiler_CARBONATE_TANK_weight',
+                             'avg': 0, 'plot': 'line_raw', 'y_min': 10, 'y_max': 90},
+        'pH 값 체크': {'x_col': 'Timestamp', 'y_col': 'Boiler AE501_PH_Sensor_new',
                     'date_out': [],
-                    'avg': 0, 'plot': 'line_raw', 'y_min': 3000, 'y_max': 7000},
+                    'avg': 0, 'plot': 'line_raw', 'y_min': 8, 'y_max': 10},
+        '중탄산 투입량 체크': {'x_col': 'Timestamp', 'y_col': 'Boiler_CARBONATE_TANK_weight',
+                       'date_out': [],
+                       'avg': 0, 'plot': 'line_raw', 'y_min': 3000, 'y_max': 7000},
         'Heater Power': {'x_col': 'Timestamp', 'y_col': 'Alpur TM.Heater1.Power_Mes',
-                          'date_out': [],
-                          'avg': avg_values['Alpur TM.Heater1.Power_Mes'], 'plot': 'line_raw_multi', 'y_min': 10,'y_max': 20},
-        'DBF 예열': {'x_col': 'Timestamp', 'y_col': 'DBF_Pree TC_BoxTemp',
                          'date_out': [],
-                         'avg': avg_values['DBF_Pree TC_BoxTemp'], 'plot': 'line_raw_TC_BoxTemp', 'y_min': 0,'y_max': 700},
+                         'avg': avg_values['Alpur TM.Heater1.Power_Mes'], 'plot': 'line_raw_multi', 'y_min': 10,
+                         'y_max': 20},
+        'DBF 예열': {'x_col': 'Timestamp', 'y_col': 'DBF_Pree TC_BoxTemp',
+                   'date_out': [],
+                   'avg': avg_values['DBF_Pree TC_BoxTemp'], 'plot': 'line_raw_TC_BoxTemp', 'y_min': 0, 'y_max': 700},
         'RFI 가동률': {'x_col': 'BATCHNO', 'y_col': 'Period', 'date_out': date_Out['Period'], 'avg': avg_values['Period'],
-                        'plot': 'bar', 'y_min': 0, 'y_max': 20},
+                    'plot': 'bar', 'y_min': 0, 'y_max': 20},
         '일자별_RFI_가동률': {'x_col': 'just_date', 'y_col': 'RFI_Day', 'date_out': [], 'avg': avg_values['RFI_Day'],
                         'plot': 'line', 'y_min': 0, 'y_max': 100},
-        'Split jet valve 압력 모니터링': {'x_col': 'Timestamp', 'y_col': 'DC_3 JET_PV_SplitJetFacePressure', 'date_out': date_Out[''], 'avg': avg_values[''],
-                        'plot': 'line_raw', 'y_min': 2800, 'y_max': 3100},
+        'Split jet valve 압력 모니터링': {'x_col': 'Timestamp', 'y_col': 'DC_3 JET_PV_SplitJetFacePressure',
+                                    'date_out': date_Out[''], 'avg': avg_values[''],
+                                    'plot': 'line_raw', 'y_min': 2800, 'y_max': 3100},
     }
     # filtered dictionary
     filtered_map = {key: value for key, value in plot_type_map.items() if any(string in key for string in lst_Target)}
@@ -243,7 +279,7 @@ def get_df_Alpur_head(df_PI,df_MES):
     df3 = df3.reset_index().rename(columns={'index': 'Timestamp'})
     df3['check_Alpur_head_loss'] = np.where(df3['Alpur_head_loss'].between(20, 40), 0, 1)
     df = df_MES.merge(df3, on=['BATCHNO'], how='left')
-
+    df = df.loc[df['BATCHNO']!='S95044'] # PI 시스템 이상으로 제외 2023-08-10
     return df
 
 def get_df_Scale(df_PI,df_MES):
@@ -462,11 +498,6 @@ def main():
         avg_values_Scale = df_Scale[['Cl_Scale_Usage_Drop']].mean().round(1)
         date_Out_Scale = get_date_Out(df_Scale, ['Cl_Scale_Usage_Drop'])
     #######################################################################################
-    # start_1 = pd.to_datetime('2023-05-15', format='%Y-%m-%d').strftime('%Y-%m-%d') + ' 06:30:00'
-    # end_1   = pd.to_datetime('2023-05-17', format='%Y-%m-%d').strftime('%Y-%m-%d') + ' 06:30:00'
-    # df_PI_jet = get_df_filter(['DC_3 JET_PV_SplitJetFacePressure'],start_1, end_1, df_PI)
-    # df_MES_3 = get_df_MES(pd.to_datetime('2023-05-15', format='%Y-%m-%d'), pd.to_datetime('2023-05-17', format='%Y-%m-%d'), p.sql_SigMon_split_jet)
-
     df_PI_jet = get_df_filter(['DC_3 JET_PV_SplitJetFacePressure'], EndDay2, ToDay_0630, df_PI)
     df_MES_3 = get_df_MES(StartDay, EndDay, p.sql_SigMon_split_jet)
     df_jet = get_df_split_jet(df_PI_jet, df_MES_3)
@@ -507,7 +538,6 @@ def main():
 
     lst_Target = ['Alpur Head Loss', 'DBF Head Loss', '주조 초기 용탕 온도', '초기 냉각수 수온', 'Butt curl수준','Ca 제거효율','Ca 제거효율(DROP)']
     lst_stmt, df_data = get_data(lst_Target, date_Out, avg_value_M2, df_Alpur)
-    # lst_stmt_scale, df_data_scale = get_data(['Alpur 염소 사용량','Alpur 염소 사용량(일자별)'], date_Out, avg_value_M2, df_Scale)
     if df_Scale.empty:
         lst_stmt_scale, df_data_scale = [],None
     else:
@@ -655,6 +685,34 @@ def main():
     df_Ti_B_rod = get_df_filter(Cols_Ti_B_rod, EndDay2, ToDay_0630, df_PI)
     lst_stmt_Ti_B_rod, df_data_Ti_B_rod = get_data(lst_Target_Ti_B_rod, date_Out, avg_value_M2, df_Ti_B_rod)
     #######################################################################################
+    #######################################################################################
+    df = get_df_filter(['SH BB_DS_BEARING_TEMP','SH BB_NDS_BEARING_TEMP'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_BB_BEARING, df_data_BB_BEARING = get_data(['Debaler Bearing (DR/NDR) 온도 Monitoring'], date_Out, avg_value_M2, df)
+    df = get_df_filter(['SH RT_DS_BEARING_TEMP','SH RT_NDS_BEARING_TEMP'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_RT_BEARING, df_data_RT_BEARING = get_data(['#1 Shredder (DR/NDR) 온도 Monitoring'], date_Out, avg_value_M2, df)
+    df = get_df_filter(['SH HD_DS_BEARING_TEMP','SH HD_NDS_BEARING_TEMP'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_HD_BEARING, df_data_HD_BEARING = get_data(['#2 Shredder (DR/NDR) 온도 Monitoring'], date_Out, avg_value_M2, df)
+    df = get_df_filter(['M22_Amp_Out', 'M38_Amp_Out'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_Amp_Out, df_data_Amp_Out = get_data(['M22, M38 Conveyor 전류 Monitoring'], date_Out, avg_value_M2, df)
+
+    df = get_df_filter(['FIKE_BB DE_EIV1','FIKE_BB DE_EIV2','FIKE_BB DE_EIV3'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_FIKE_BB, df_data_FIKE_BB = get_data(['Fike system damper Monitoring_ Debaler'], date_Out, avg_value_M2, df)
+    df = get_df_filter(['FIKE_SH1 SH1_EIV1','FIKE_SH1 SH1_EIV2'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_FIKE_SH1, df_data_FIKE_SH1 = get_data(['Fike system damper Monitoring_ #1 Shredder'], date_Out, avg_value_M2, df)
+    df = get_df_filter(['FIKE_SH2 SH2_EIV1','FIKE_SH2 SH2_EIV2'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_FIKE_SH2, df_data_FIKE_SH2 = get_data(['Fike system damper Monitoring_ #2 Shredder'], date_Out, avg_value_M2, df)
+
+    df = get_df_filter(['SH BB_AMPS','SH RT_AMPS','SH HD_AMPS'], StartDay2, ToDay_0630, df_PI)
+    lst_stmt_AMPS, df_data_AMPS = get_data(['Debaler, Shreder1, 2 대한 전류값 Monitoring'], date_Out, avg_value_M2, df)
+
+
+    # df = get_df_filter(['Delac_1 Cyclone_Inlet_Air_Temp_Setpoint','Delac_1 Cyclone_Inlet_Temp',
+    #                     'Delac_1 Kiln_Inlet_Temperature','Delac_1 Recirc_Fan_Motor_Requested_Speed'],
+    #                    StartDay_1, ToDay_0630, df_PI)
+    # lst_stmt_Inlet1, df_data_Inlet1 = get_data(['Kiln & Cyclone Inlet temp'], date_Out, avg_value_M2, df)
+
+
+    #######################################################################################
     lst_Target_CoolingTower = ['Cooling Tower']
     df_today, clt_table = get_df_CoolingTower()
     path_plot, filename = U.CoolingTower_Plot(clt_table, df_today)
@@ -675,16 +733,19 @@ def main():
     lst_stmt = lst_stmt_scale+lst_stmt_scale_day+lst_stmt_Ti_B_rod+lst_stmt_Flow_Rotor+ lst_stmt_Power_Mes+ lst_stmt_PI \
                + lst_Target_TC_BoxTemp+ lst_stmt + lst_stmt_CoolingTower+lst_stmt_1+lst_stmt_Casting_Water+lst_stmt_Casting_Water_flow \
                +lst_stmt_Press_Boiler+lst_stmt_Press+lst_stmt_Diff_Press+lst_stmt_Bag_House+lst_stmt_CoolingTower2+lst_stmt_cl_ca+lst_stmt_rfi+lst_stmt_rfi_day \
-               + lst_stmt_jet
+               + lst_stmt_jet+lst_stmt_BB_BEARING+lst_stmt_BB_BEARING+lst_stmt_RT_BEARING+lst_stmt_HD_BEARING+lst_stmt_Amp_Out+lst_stmt_FIKE_BB+lst_stmt_FIKE_SH1+lst_stmt_FIKE_SH2+lst_stmt_AMPS
 
     df_data = pd.concat([df_data_scale,df_data_scale_day,df_data_Ti_B_rod, df_CoolingTower,df_data_Flow_Rotor
                             ,df_data_Power_Mes, df_data_TC_BoxTemp,df_data_1,df_data_Casting_Water,df_data_Casting_Water_flow,
                          df_data_Press_Boiler,df_data_PI, df_data,df_Press,df_Diff_Press,df_Bag_House,df_CoolingTower2,df_data_cl_ca,df_data_rfi,df_data_rfi_day,
-                         df_data_jet],axis=0)
+                         df_data_jet,df_data_BB_BEARING,df_data_RT_BEARING,df_data_HD_BEARING+df_data_Amp_Out,
+                         df_data_FIKE_BB,df_data_FIKE_SH1,df_data_FIKE_SH2,df_data_AMPS],axis=0)
     logger.info("Data generation completed")
 
     try:
-        data_file_path = 'D:/Python/DecoaterFeedRate/data/data_{}.csv'.format(str_today)
+        data_file_path = './data/data_{}.csv'.format(str_today)
+        # data_file_path = 'D:/Python/DecoaterFeedRate/data/data_{}.csv'.format(str_today)
+        # data_file_path = 'C:/Users/leec/OneDrive - Novelis Inc/Python/Practice/DecoaterFeedRate/data/data_{}.csv'.format(str_today)
         df_data.to_csv(data_file_path, index=False, encoding="utf-8-sig")
         U.send_to_DBF(lst_stmt, data_file_path)
     except Exception as err:
@@ -698,13 +759,16 @@ def main():
 if __name__ == "__main__":
     # U.remove_folder()
     # U.retention_file();
-
-    # StartDay2 = '2023-05-01 06:30:00'
-    # StartDay_1 = '20230501'
-    # df_PI = get_df_PI(StartDay2, ToDay_0630)
-    # df_MES_2 = get_df_MES(StartDay_1, EndDay, p.sql_SigMon_MES)
+    # StartDay = today - datetime.timedelta(days=130)
+    # StartDay2 = StartDay.strftime('%Y-%m-%d') + ' 06:30:00'
+    # StartDay_1 = '20230401'
+    # # df_PI = get_df_PI(StartDay2, ToDay_0630)
+    # df_PI = U.PItag_to_Datframe(['New_RFI_Salt_Flow_PV'], StartDay2, ToDay_0630, '1m')
+    # df_PI = df_PI.reset_index().rename(columns={'index': 'Timestamp'})
+    # df_PI['just_date'] = df_PI['Timestamp'].dt.month.astype(str) + '-' + df_PI['Timestamp'].dt.day.astype(str)
+    # df_MES_RFI = get_df_MES(StartDay_1, EndDay, p.sql_SigMon_RFI)
     #
-    # df_Scale = get_df_Scale(df_PI, df_MES_2)
-    # df_Scale.to_pickle('./data/scale.pickle')
+    # df_RFI = get_df_RFI(df_PI, df_MES_RFI)
+    # df_RFI.to_pickle('./data/RFI.pickle')
     main();
 
